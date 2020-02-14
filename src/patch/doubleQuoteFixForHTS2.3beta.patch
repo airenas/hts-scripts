@@ -1,0 +1,59 @@
+diff --git a/HTKLib/HUtil.c b/HTKLib/HUtil.c
+index 30e043f..f7bbe29 100644
+--- a/HTKLib/HUtil.c
++++ b/HTKLib/HUtil.c
+@@ -804,7 +804,10 @@ static char *GetAlpha(char *s)
+       }
+       if (ch==ESCAPE_CHAR) {
+          ReadCh();
+-         if (ch<'0' || ch>'7') {
++         if (ch == DBL_QUOTE || ch == SING_QUOTE){
++                 	 /* everything OK */
++         }
++         else if (ch<'0' || ch>'7') {
+             n = ch - '0'; ReadCh();
+             if (ch<'0' || ch>'7') EdError("Octal digit expected");
+             n = n*8 + ch - '0'; ReadCh();
+diff --git a/HTKTools/HRest.c b/HTKTools/HRest.c
+index 68e5e36..7acc008 100644
+--- a/HTKTools/HRest.c
++++ b/HTKTools/HRest.c
+@@ -1446,12 +1446,27 @@ void UpdateTheModel(void)
+       FixAllGConsts(&hset);
+ }
+ 
++/* fix hmm name for output */
++void FixName(char *outName, char *inName)
++{
++	int pos = 0, i;
++	for (i=0; i<strlen(inName); i++) {
++		if (inName[i] == '"'){
++			outName[pos] = '\\';
++			pos++;
++		}
++		outName[pos] = inName[i];
++		pos++;
++	}
++	outName[pos] = 0;
++}
++
+ /* SaveDuration: save duration distribution */ 
+ void SaveDuration(void) 
+ { 
+    int i; 
+    double mean, var; 
+-   char base[MAXSTRLEN],buf[MAXSTRLEN];
++   char base[MAXSTRLEN],buf[MAXSTRLEN],hmmName[MAXSTRLEN];
+    FILE *fp;
+    LabId hmmId;
+    
+@@ -1472,7 +1487,8 @@ void SaveDuration(void)
+    for (i=1; i<=nStates-2; i++)
+       fprintf(fp," 0");
+    fprintf(fp,"\n<VECSIZE> %d <NULLD><DIAGC><%s>\n",nStates-2,ParmKind2Str(hset.pkind,buf));
+-   fprintf(fp,"~h \"%s\"\n",hmmId->name);
++   FixName(hmmName, hmmId->name);
++   fprintf(fp,"~h \"%s\"\n",hmmName);
+    fprintf(fp,"<BEGINHMM>\n<NUMSTATES> 3\n<STATE> 2\n");
+                
+    /* output mean & variance */

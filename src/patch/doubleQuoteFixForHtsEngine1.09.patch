@@ -1,0 +1,26 @@
+diff --git a/lib/HTS_misc.c b/lib/HTS_misc.c
+index e1294b7..4ea75e4 100644
+--- a/lib/HTS_misc.c
++++ b/lib/HTS_misc.c
+@@ -339,7 +339,7 @@ size_t HTS_fwrite_little_endian(const void *buf, size_t size, size_t n, FILE * f
+ /* HTS_get_pattern_token: get pattern token (single/double quote can be used) */
+ HTS_Boolean HTS_get_pattern_token(HTS_File * fp, char *buff)
+ {
+-   char c;
++   char c, previousC;
+    size_t i;
+    HTS_Boolean squote = FALSE, dquote = FALSE;
+ 
+@@ -375,10 +375,11 @@ HTS_Boolean HTS_get_pattern_token(HTS_File * fp, char *buff)
+    i = 0;
+    while (1) {
+       buff[i++] = c;
++      previousC = c;
+       c = HTS_fgetc(fp);
+       if (squote && c == '\'')
+          break;
+-      if (dquote && c == '\"')
++      if (dquote && c == '\"' && previousC != '\\')
+          break;
+       if (!squote && !dquote) {
+          if (c == ' ')
