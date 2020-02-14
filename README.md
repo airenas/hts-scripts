@@ -2,32 +2,30 @@
 
 The repo contains scripts to download and build tools required for [HTS](http://hts.sp.nitech.ac.jp/) synthesis demo.
 
-Preparation:
+## Preparation:
 
-1. Manualy download:
+1. Manualy download into directory *./downloads_manual*:
 
-- *HTK-3.4.1.tar.gz* from [htk.eng.cam.ac.uk](http://htk.eng.cam.ac.uk/download.shtml) into *./downloads_manual*
+- *HTK-3.4.1.tar.gz* from [htk.eng.cam.ac.uk](http://htk.eng.cam.ac.uk/download.shtml)
 
-- *HDecode-3.4.1.tar.gz* from [htk.eng.cam.ac.uk](http://htk.eng.cam.ac.uk/download.shtml) into *./downloads_manual*
+- *HDecode-3.4.1.tar.gz* from [htk.eng.cam.ac.uk](http://htk.eng.cam.ac.uk/download.shtml)
 
-- *hts_engine_API-1.10.tar.gz8 from [hts-engine.sourceforge.net/](http://hts-engine.sourceforge.net) into *./downloads_manual*
+- *hts_engine_API-1.10.tar.gz* from [hts-engine.sourceforge.net/](http://hts-engine.sourceforge.net)
 
-1. Download the rest and build: 
+2. Download the rest and build using the make script:
 
 ```bash
 make prepare_all -j4
 ```
 
-1. Configure training tasks using the prepared tools. See *configure_cmu_arctic* task in *Makefile*
+3. Configure training tasks using the prepared tools. See *configure_cmu_arctic* task in [Makefile](Makefile)
 
 ---
 
 ## Author
 
-### Airenas Vaičiūnas
-
-* [bitbucket.org/airenas](https://bitbucket.org/airenas)
-* [linkedin.com/in/airenas](https://www.linkedin.com/in/airenas/)
+- [bitbucket.org/airenas](https://bitbucket.org/airenas)
+- [linkedin.com/in/airenas](https://www.linkedin.com/in/airenas/)
 
 ---
 
