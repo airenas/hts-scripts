@@ -107,7 +107,6 @@ prepare_all: prepare_hts_engine prepare_hts prepare_festival prepare_sptk
 install:
 	sudo apt-get install libx11-dev csh libncurses5-dev sox
 #########################################################################################
-
 configure_cmu_arctic:
 	(cd HTS-demo_CMU-ARCTIC-ADAPT && \
    		./configure --with-fest-search-path=$(tools_dir)/festival/examples \
