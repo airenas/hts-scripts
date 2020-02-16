@@ -1,6 +1,8 @@
 sptk_ver=3.11
-festival_ver=2.4
+festival_ver=2.5.0
+festival_short_ver=2.5
 hts_ver=2.3
 htk_ver=3.4.1
 hts_engine_ver=1.10
+gcc_festival=gcc
 

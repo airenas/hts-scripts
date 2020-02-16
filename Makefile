@@ -35,24 +35,24 @@ $(bin_dir)/$(sptk)/done: $(tools_dir)/$(sptk)/done | $(bin_dir)
 prepare_sptk: $(bin_dir)/$(sptk)/done
 #########################################################################################
 $(dwn_dir)/$(festival_speech_tools).tar.gz: | $(dwn_dir)
-	wget -O $(dwn_dir)/$(festival_speech_tools).tar.gz http://www.cstr.ed.ac.uk/downloads/festival/$(festival_ver)/$(festival_speech_tools)-release.tar.gz
+	wget -O $(dwn_dir)/$(festival_speech_tools).tar.gz http://festvox.org/packed/festival/$(festival_short_ver)/$(festival_speech_tools)-release.tar.gz
 $(tools_dir)/speech_tools/extracted: $(dwn_dir)/$(festival_speech_tools).tar.gz | $(tools_dir)
 	tar xvzf $(dwn_dir)/$(festival_speech_tools).tar.gz -C $(tools_dir)
 	touch $(tools_dir)/speech_tools/extracted
 $(tools_dir)/speech_tools/done: $(tools_dir)/speech_tools/extracted | $(bin_dir)
-	(cd $(tools_dir)/speech_tools && ./configure)
+	(cd $(tools_dir)/speech_tools && CC=$(gcc_festival) ./configure)
 	$(MAKE) -C $(tools_dir)/speech_tools
 	touch $(tools_dir)/speech_tools/done
 #########################################################################################
 $(dwn_dir)/$(festival).tar.gz: | $(dwn_dir)
-	wget -O $(dwn_dir)/$(festival).tar.gz http://www.cstr.ed.ac.uk/downloads/festival/$(festival_ver)/$(festival)-release.tar.gz
+	wget -O $(dwn_dir)/$(festival).tar.gz http://festvox.org/packed/festival/$(festival_short_ver)/$(festival)-release.tar.gz
 
 $(tools_dir)/festival/extracted: $(dwn_dir)/$(festival).tar.gz | $(tools_dir)
 	tar xvzf $(dwn_dir)/$(festival).tar.gz -C $(tools_dir)
 	touch $(tools_dir)/festival/extracted
 
 $(tools_dir)/festival/done: $(tools_dir)/festival/extracted $(tools_dir)/speech_tools/done | $(bin_dir)
-	(cd $(tools_dir)/festival && ./configure)
+	(cd $(tools_dir)/festival && CC=$(gcc_festival) ./configure)
 	$(MAKE) -C $(tools_dir)/festival -j 1
 	touch $(tools_dir)/festival/done
 prepare_festival: $(tools_dir)/festival/done
