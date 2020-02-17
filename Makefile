@@ -5,6 +5,7 @@ dwn_dir=downloads
 dwn_m_dir=downloads_manual
 tools_dir=${CURDIR}/tools
 bin_dir=${CURDIR}/bin
+#host?=linux
 
 sptk=SPTK-$(sptk_ver)
 festival_speech_tools=speech_tools-$(festival_ver)
@@ -82,7 +83,7 @@ $(tools_dir)/$(hts)-$(htk)/patched: $(tools_dir)/$(hts)-$(htk)/htk.done $(tools_
 	touch $(tools_dir)/$(hts)-$(htk)/patched
 
 $(bin_dir)/$(hts)/done: $(tools_dir)/$(hts)-$(htk)/patched | $(bin_dir)
-	(cd $(tools_dir)/$(hts)-$(htk) && ./configure --prefix=$(bin_dir)/$(hts) --host=linux)
+	(cd $(tools_dir)/$(hts)-$(htk) && ./configure --prefix=$(bin_dir)/$(hts) --host=$(host))
 	$(MAKE) -C $(tools_dir)/$(hts)-$(htk)
 	$(MAKE) -C $(tools_dir)/$(hts)-$(htk) install
 	touch $(bin_dir)/$(hts)/done
