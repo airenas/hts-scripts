@@ -4,3 +4,4 @@ tools/**
 downloads**/**
 HTS-demo_CMU-ARCTIC-ADAPT/**
 HTS-demo_CMU-ARCTIC-ADAPT*
+demo/hts-lt/**/Makefile
