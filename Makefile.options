@@ -5,4 +5,6 @@ hts_ver=2.3
 htk_ver=3.4.1
 hts_engine_ver=1.10
 gcc_festival=gcc
+copy_script=../prozodija/src/groovy/src/scripts/copy/CopyDataToHts.groovy
+prepared_data_dir=../prozodija/prepareData/tmp
 

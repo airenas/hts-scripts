@@ -5,6 +5,7 @@ dwn_dir=downloads
 dwn_m_dir=downloads_manual
 tools_dir=${CURDIR}/tools
 bin_dir=${CURDIR}/bin
+hts_demo_dir=demo/hts-lt
 #host?=linux
 
 sptk=SPTK-$(sptk_ver)
@@ -108,12 +109,32 @@ prepare_all: prepare_hts_engine prepare_hts prepare_festival prepare_sptk
 install:
 	sudo apt-get install libx11-dev csh libncurses5-dev sox
 #########################################################################################
-configure_cmu_arctic:
+HTS-demo_CMU-ARCTIC-ADAPT: 
+	tar xvjf HTS-demo_CMU-ARCTIC-ADAPT.tar.bz2 -C ./
+
+configure_cmu_arctic: | HTS-demo_CMU-ARCTIC-ADAPT
 	(cd HTS-demo_CMU-ARCTIC-ADAPT && \
    		./configure --with-fest-search-path=$(tools_dir)/festival/examples \
                  --with-sptk-search-path=$(bin_dir)/$(sptk)/bin \
                  --with-hts-search-path=$(bin_dir)/$(hts)/bin \
                  --with-hts-engine-search-path=$(bin_dir)/$(hts_engine)/bin )
+
+configure_lt: 
+	(cd $(hts_demo_dir) && \
+   		./configure --with-fest-search-path=$(tools_dir)/festival/examples \
+                --with-sptk-search-path=$(bin_dir)/$(sptk)/bin \
+                --with-hts-search-path=$(bin_dir)/$(hts)/bin \
+                --with-hts-engine-search-path=$(bin_dir)/$(hts_engine)/bin \
+				DATASET=lab \
+				TRAINSPKR='BRO JOK' \
+  				ADAPTSPKR=URB \
+				QNAME=qst001 \
+				F0_RANGES='BRO 110 450 JOK 110 450 URB 110 450' \
+				SAMPFREQ=44100 SPEAKER=ALL DATASET=lab LOWERF0=110 UPPERF0=450 \
+				FRAMELEN=1100 FRAMESHIFT=220 NSTATE=5)
+
+copy_hts_data: 
+	groovy $(copy_script) $(prepared_data_dir) $(hts_demo_dir)/data -wav -mono_labels -full_labels -gen_labels -questions 
 
 clean:
 	rm -rf $(dwn_dir)
