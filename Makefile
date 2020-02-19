@@ -1,5 +1,7 @@
 -include Makefile.options
 
+-include $(prepared_data_dir)/config.options
+
 
 dwn_dir=downloads
 dwn_m_dir=downloads_manual
@@ -126,11 +128,12 @@ configure_lt:
                 --with-hts-search-path=$(bin_dir)/$(hts)/bin \
                 --with-hts-engine-search-path=$(bin_dir)/$(hts_engine)/bin \
 				DATASET=lab \
-				TRAINSPKR='BRO JOK' \
-  				ADAPTSPKR=URB \
+				TRAINSPKR='$(TRAIN_SPEAKERS)' \
+  				ADAPTSPKR=$(ADAPT_SPEAKER) \
+				ADAPTHEAD=A0 \
 				QNAME=qst001 \
-				F0_RANGES='BRO 110 450 JOK 110 450 URB 110 450' \
-				SAMPFREQ=44100 SPEAKER=ALL DATASET=lab LOWERF0=110 UPPERF0=450 \
+				F0_RANGES='$(SPEAKERS_F0_RANGES)' \
+				SAMPFREQ=44100 DATASET=lab \
 				FRAMELEN=1100 FRAMESHIFT=220 NSTATE=5)
 
 copy_hts_data: 

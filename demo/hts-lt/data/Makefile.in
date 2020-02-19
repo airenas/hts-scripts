@@ -116,7 +116,7 @@ all: analysis labels
 
 analysis: raw/.done lf0/.done cmp/.done ffo stats
 
-labels: mlf list scp
+labels: speaker_gen_data mlf list scp
 
 raw/.done: wav
 	# Converting wav to raw
@@ -477,6 +477,17 @@ lab:
 			done; \
 		fi; \
 	done
+	# Copying labels under gen directory
+	mkdir -p labels/gen; \
+	for spkr in $(ADAPTSPKR); do \
+		mkdir -p labels/gen/$${spkr}; \
+		for lab in labels/gen/*.lab; do \
+			base=`basename $${lab} .lab`; \
+			cp $${lab} labels/gen/$${spkr}/$(DATASET)_$${spkr}_$${base}.lab; \
+		done; \
+	done
+
+speaker_gen_data:
 	# Copying labels under gen directory
 	mkdir -p labels/gen; \
 	for spkr in $(ADAPTSPKR); do \
