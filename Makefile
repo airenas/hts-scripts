@@ -1,5 +1,7 @@
 -include Makefile.options
 
+-include $(cfg)
+
 -include $(prepared_data_dir)/config.options
 
 
@@ -7,7 +9,7 @@ dwn_dir=downloads
 dwn_m_dir=downloads_manual
 tools_dir=${CURDIR}/tools
 bin_dir=${CURDIR}/bin
-hts_demo_dir=demo/hts-lt
+hts_demo_dir?=demo/hts-lt
 #host?=linux
 
 sptk=SPTK-$(sptk_ver)
@@ -121,7 +123,11 @@ configure_cmu_arctic: | HTS-demo_CMU-ARCTIC-ADAPT
                  --with-hts-search-path=$(bin_dir)/$(hts)/bin \
                  --with-hts-engine-search-path=$(bin_dir)/$(hts_engine)/bin )
 
-configure_lt: 
+$(hts_demo_dir): 
+	mkdir -p $(hts_demo_dir)
+	cp -r demo/adpt-templ/* $(hts_demo_dir)/
+
+configure_lt: | $(hts_demo_dir)
 	(cd $(hts_demo_dir) && \
    		./configure --with-fest-search-path=$(tools_dir)/festival/examples \
                 --with-sptk-search-path=$(bin_dir)/$(sptk)/bin \
