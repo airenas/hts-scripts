@@ -144,6 +144,7 @@ configure_lt: | $(hts_demo_dir)
 
 copy_hts_data: 
 	groovy $(copy_script) $(prepared_data_dir) $(hts_demo_dir)/data -wav -mono_labels -full_labels -gen_labels -questions 
+	cp $(prepared_data_dir)/config.options $(hts_demo_dir)/
 
 clean:
 	rm -rf $(dwn_dir)
