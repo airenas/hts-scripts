@@ -4,7 +4,6 @@ tools/**
 downloads**/**
 HTS-demo_CMU-ARCTIC-ADAPT/**
 HTS-demo_CMU-ARCTIC-ADAPT*
-demo/hts-lt/**/Makefile
-demo/**/**
 src/py/.idea/**
 prozodija.data.log*
+demo/hts*/**
