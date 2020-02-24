@@ -271,7 +271,7 @@ lf0/.avocoder.done: wav16/.done
 			base=`basename $${wav} .wav`; \
 			echo "Extracting features from $${wav}"; \
 			$(AHOCODER) $${wav} lf0/$${spkr}/$${base}.lf0 mgc/$${spkr}/$${base}.mgc bap/$${spkr}/$${base}.bap \
-				--f0min=$${lowerf0} --f0max=$${upperf0} --ccord=$(MGCORDER); \
+				--f0min=$${lowerf0} --f0max=$${upperf0} --ccord=$(MGCORDER) --lframe=$(FRAMESHIFT); \
 		done; \
 	done
 	touch lf0/.avocoder.done

@@ -159,11 +159,11 @@ configure_lt: | $(hts_demo_dir)
 				QNAME=qst001 \
 				F0_RANGES='$(SPEAKERS_F0_RANGES)' \
 				SAMPFREQ=$(SAMPFREQ) DATASET=lab \
-				FRAMELEN=1100 FRAMESHIFT=220 NSTATE=5 \
+				FRAMELEN=$(FRAMELEN) FRAMESHIFT=$(FRAMESHIFT) NSTATE=5 \
 				USE_A_VOCODER=$(USE_A_VOCODER))
 
 clean_demo: 
-	rm -r $(hts_demo_dir)
+	rm -rf $(hts_demo_dir)
 
 copy_hts_data: 
 	groovy $(copy_script) $(prepared_data_dir) $(hts_demo_dir)/data -wav -mono_labels -full_labels -gen_labels -questions 
