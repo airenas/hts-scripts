@@ -100,6 +100,11 @@ NMGCWIN = @NMGCWIN@
 NLF0WIN = @NLF0WIN@
 NBAPWIN = @NBAPWIN@
 
+#A vocoder
+USE_A_VOCODER = @USE_A_VOCODER@
+AHOCODER = @AHOCODER@
+AHODECODER = @AHODECODER@
+
 # list of speakers
 TRAINSPKR = @TRAINSPKR@
 ADAPTSPKR = @ADAPTSPKR@
@@ -113,8 +118,11 @@ ADAPTHEAD = @ADAPTHEAD@
 export F0_RANGES=@F0_RANGES@
 
 all: analysis labels
-
-analysis: raw/.done lf0/.done cmp/.done ffo stats
+_analysis = raw/.done lf0/.done cmp/.done ffo stats
+ifeq ($(USE_A_VOCODER),1)
+    _analysis = wav16/.done 
+endif
+analysis: $(_analysis)
 
 labels: speaker_gen_data mlf list scp
 
@@ -131,6 +139,20 @@ raw/.done: wav
 		done \
 	done
 	touch raw/.done
+
+wav16/.done: wav
+	# Converting wav to wav 16 kH
+	mkdir -p wav16
+
+	for spkr in $(ALLSPKR); do \
+		mkdir -p wav16/$${spkr}; \
+		for wav in wav/$${spkr}/$(DATASET)_$${spkr}_*.wav; do \
+			base=`basename $${wav} .wav`; \
+			echo "Converting WAV to 16 kH from $${wav}" to wav16/$${spkr}/; \
+			sox $${wav} -r 16000 wav16/$${spkr}/$${base}.wav; \
+		done \
+	done
+	touch wav16/.done	
 
 
 lf0/.done: raw/.done

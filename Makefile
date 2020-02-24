@@ -18,6 +18,9 @@ festival=festival-$(festival_ver)
 hts=HTS-$(hts_ver)
 htk=HTK-$(htk_ver)
 hts_engine=hts_engine_API-$(hts_engine_ver)
+ahocoder=ahocoder_64
+
+SAMPFREQ?=44100
 
 $(dwn_dir):
 	mkdir $(dwn_dir)
@@ -109,7 +112,22 @@ $(bin_dir)/$(hts_engine)/done: $(tools_dir)/$(hts_engine)/patched | $(bin_dir)
 	touch $(bin_dir)/$(hts_engine)/done
 prepare_hts_engine: $(bin_dir)/$(hts_engine)/done
 #########################################################################################
-prepare_all: prepare_hts_engine prepare_hts prepare_festival prepare_sptk
+$(dwn_dir)/$(ahocoder).tar.gz: | $(dwn_dir)
+	wget -O $(dwn_dir)/$(ahocoder).tar.gz http://aholab.ehu.es/users/derro/ahocoder_v099_x86_64.tar.gz
+
+$(tools_dir)/$(ahocoder)/.done: $(dwn_dir)/$(ahocoder).tar.gz | $(tools_dir)
+	tar xvxf $(dwn_dir)/$(ahocoder).tar.gz -C $(tools_dir)
+	touch $(tools_dir)/$(ahocoder)/.done
+
+$(bin_dir)/$(ahocoder)/.done: $(tools_dir)/$(ahocoder)/.done
+	mkdir -p $(bin_dir)/$(ahocoder)
+	cp $(tools_dir)/$(ahocoder)/aho* $(bin_dir)/$(ahocoder)/
+	chmod +x $(bin_dir)/$(ahocoder)/aho*
+	touch $(bin_dir)/$(ahocoder)/.done
+
+prepare_ahocoder: $(bin_dir)/$(ahocoder)/.done
+#########################################################################################
+prepare_all: prepare_hts_engine prepare_hts prepare_festival prepare_sptk prepare_ahocoder
 install:
 	sudo apt-get install libx11-dev csh libncurses5-dev sox
 #########################################################################################
@@ -133,14 +151,19 @@ configure_lt: | $(hts_demo_dir)
                 --with-sptk-search-path=$(bin_dir)/$(sptk)/bin \
                 --with-hts-search-path=$(bin_dir)/$(hts)/bin \
                 --with-hts-engine-search-path=$(bin_dir)/$(hts_engine)/bin \
+				--with-ahocoder-search-path=$(bin_dir)/$(ahocoder) \
 				DATASET=lab \
 				TRAINSPKR='$(TRAIN_SPEAKERS)' \
   				ADAPTSPKR=$(ADAPT_SPEAKER) \
 				ADAPTHEAD=A0 \
 				QNAME=qst001 \
 				F0_RANGES='$(SPEAKERS_F0_RANGES)' \
-				SAMPFREQ=44100 DATASET=lab \
-				FRAMELEN=1100 FRAMESHIFT=220 NSTATE=5)
+				SAMPFREQ=$(SAMPFREQ) DATASET=lab \
+				FRAMELEN=1100 FRAMESHIFT=220 NSTATE=5 \
+				USE_A_VOCODER=$(USE_A_VOCODER))
+
+clean_demo: 
+	rm -r $(hts_demo_dir)
 
 copy_hts_data: 
 	groovy $(copy_script) $(prepared_data_dir) $(hts_demo_dir)/data -wav -mono_labels -full_labels -gen_labels -questions 

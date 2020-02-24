@@ -689,6 +689,7 @@ FRAMELEN
 USESTRAIGHT
 USEUTT
 USEGV
+USE_A_VOCODER
 PWD
 QNAME
 VER
@@ -714,6 +715,8 @@ MLPG
 PITCH
 RAW2WAV
 WAV2RAW
+AHOCODER
+AHODECODER
 SWAB
 MINMAX
 MGC2SP
@@ -794,6 +797,7 @@ with_matlab_search_path
 with_straight_path
 with_hts_search_path
 with_hts_engine_search_path
+with_ahocoder_search_path
 '
       ac_precious_vars='build_alias
 host_alias
@@ -4538,6 +4542,21 @@ if test ! -f "$ENGINE"; then
 fi
 
 
+# ahocoder
+if test "${with_ahocoder_search_path+set}" = set; then :
+  withval=$with_ahocoder_search_path; ahocoder_search_path=$withval
+fi
+
+AHOCODER=${ahocoder_search_path}/ahocoder16_64
+if test ! -f "$AHOCODER"; then
+	as_fn_error $? "Can't find AHOCODER" "$LINENO" 5
+fi
+
+# ahodecoder
+AHODECODER=${ahocoder_search_path}/ahodecoder16_64
+if test ! -f "$AHODECODER"; then
+	as_fn_error $? "Can't find AHODECODER" "$LINENO" 5
+fi
 
 # fullcontext label format
 
@@ -4634,6 +4653,10 @@ fi
 # default values
 if test -z "$USEGV"; then
 	USEGV=0
+fi
+
+if test -z "$USE_A_VOCODER"; then
+	USE_A_VOCODER=0
 fi
 
 if test -z "$USESTRAIGHT"; then

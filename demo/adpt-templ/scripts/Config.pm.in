@@ -56,6 +56,9 @@ $trainSpkr   = '@TRAINSPKR@';
 $qname       = '@QNAME@';
 $ver         = '@VER@';
 $usestraight = '@USESTRAIGHT@';
+#A vocoder
+$useAVocoder = '@USE_A_VOCODER@';
+$AHODECODER = '@AHODECODER@';
 
 @SET        = ('cmp', 'dur');
 if ( !$usestraight ) {
