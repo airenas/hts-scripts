@@ -120,7 +120,7 @@ export F0_RANGES=@F0_RANGES@
 all: analysis labels
 _analysis = raw/.done lf0/.done cmp/.done ffo stats
 ifeq ($(USE_A_VOCODER),1)
-    _analysis = wav16/.done 
+    _analysis = cmp/.avocoder.done
 endif
 analysis: $(_analysis)
 
@@ -255,6 +255,65 @@ lf0/.done: raw/.done
 		done; \
 	done
 	touch lf0/.done
+
+lf0/.avocoder.done: wav16/.done
+	mkdir -p mgc lf0 bap
+	SAMPKHZ=`echo $(SAMPFREQ) | $(X2X) +af | $(SOPR) -m 0.001 | $(X2X) +fa`; \
+	set $${F0_RANGES}; \
+	for spkr in $(ALLSPKR); do \
+		mkdir -p mgc/$${spkr} lf0/$${spkr} bap/$${spkr}; \
+		name=$${1}; lowerf0=$${2}; upperf0=$${3}; shift 3; \
+		if [ $${name} != $${spkr} ]; then \
+			echo "Order of speakers in ALLSPKR ($${spkr}) doesn't match to that in F0_RANGES ($${name})!"; \
+			exit 1; \
+		fi; \
+		for wav in wav16/$${spkr}/$(DATASET)_$${spkr}_*.wav; do \
+			base=`basename $${wav} .wav`; \
+			echo "Extracting features from $${wav}"; \
+			$(AHOCODER) $${wav} lf0/$${spkr}/$${base}.lf0 mgc/$${spkr}/$${base}.mgc bap/$${spkr}/$${base}.bap \
+				--f0min=$${lowerf0} --f0max=$${upperf0} --ccord=$(MGCORDER); \
+		done; \
+	done
+	touch lf0/.avocoder.done
+
+cmp/.avocoder.done: lf0/.avocoder.done
+	# Composing training data files from extracted features
+	mkdir -p cmp
+	echo "MGCORDER: $(MGCORDER)"
+	echo "NMGCWIN: $(NMGCWIN)"
+	echo "NLF0WIN: $(NLF0WIN)"
+	for spkr in $(ALLSPKR); do \
+		mkdir -p cmp/$${spkr}; \
+		for wav in wav16/$${spkr}/$(DATASET)_$${spkr}_*.wav; do \
+			base=`basename $${wav} .wav`; \
+			echo "Composing training data for $${base}"; \
+			MGCDIM=`expr $(MGCORDER) + 1`; \
+			LF0DIM=1; \
+			MGCWINDIM=`expr $(NMGCWIN) \* $${MGCDIM}`; \
+			LF0WINDIM=`expr $(NLF0WIN) \* $${LF0DIM}`; \
+			BYTEPERFRAME=`expr 4 \* \( $${MGCWINDIM} + $${LF0WINDIM} \)`; \
+			if [ -s mgc/$${spkr}/$${base}.mgc -a -s lf0/$${spkr}/$${base}.lf0 ]; then \
+				MGCWINS=""; \
+				i=1; \
+				while [ $${i} -le $(NMGCWIN) ]; do \
+					eval MGCWINS=\"$${MGCWINS} $(MGCWIN)$${i}\"; \
+					i=`expr $${i} + 1`; \
+				done; \
+				$(PERL) scripts/window.pl $${MGCDIM} mgc/$${spkr}/$${base}.mgc $${MGCWINS} > cmp/$${spkr}/$${base}.mgc; \
+				LF0WINS=""; \
+				i=1; \
+				while [ $${i} -le $(NLF0WIN) ]; do \
+					eval LF0WINS=\"$${LF0WINS} $(LF0WIN)$${i}\"; \
+					i=`expr $${i} + 1`; \
+				done; \
+				$(PERL) scripts/window.pl $${LF0DIM} lf0/$${spkr}/$${base}.lf0 $${LF0WINS} > cmp/$${spkr}/$${base}.lf0; \
+				$(MERGE) +f -s 0 -l $${LF0WINDIM} -L $${MGCWINDIM} cmp/$${spkr}/$${base}.mgc < cmp/$${spkr}/$${base}.lf0 > cmp/$${spkr}/$${base}.i_cmp; \
+				$(PERL) scripts/addhtkheader.pl $(SAMPFREQ) $(FRAMESHIFT) $${BYTEPERFRAME} 9 cmp/$${spkr}/$${base}.i_cmp > cmp/$${spkr}/$${base}.cmp; \
+				rm -f cmp/$${spkr}/$${base}.mgc cmp/$${spkr}/$${base}.lf0 cmp/$${spkr}/$${base}.i_cmp; \
+			fi; \
+		done; \
+	done
+	touch cmp/.avocoder.done	
 
 cmp/.done: lf0/.done
 	# Composing training data files from extracted features
