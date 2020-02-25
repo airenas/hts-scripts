@@ -117,14 +117,23 @@ ADAPTHEAD = @ADAPTHEAD@
 # Order of speakers in F0_RANGES should be the same as that in ALLSPKR
 export F0_RANGES=@F0_RANGES@
 
+#collect files
+wav_files=$(shell find wav/ -type f -name *.wav)
+cmp_files=$(patsubst wav/%.wav, cmp/%.cmp, $(wav_files))
+wav16_files=$(patsubst wav/%.wav, wav16/%.wav, $(wav_files))
+lf0_files=$(patsubst wav/%.wav, lf0/%.lf0, $(wav_files))
+
 all: analysis labels
-_analysis = raw/.done lf0/.done cmp/.done ffo stats
+_analysis = cmp/.done ffo stats
 ifeq ($(USE_A_VOCODER),1)
-    _analysis = cmp/.avocoder.done
+    _analysis = $(cmp_files)
 endif
 analysis: $(_analysis)
 
-labels: speaker_gen_data mlf list scp
+.ready: all 
+	touch .ready
+
+labels: labels/.mlf.done labels/.gen.done lists/.done scp/.done
 
 raw/.done: wav
 	# Converting wav to raw
@@ -140,20 +149,61 @@ raw/.done: wav
 	done
 	touch raw/.done
 
-wav16/.done: wav
-	# Converting wav to wav 16 kH
-	mkdir -p wav16
+wav16/%.wav: wav/%.wav
+	mkdir -p $(dir $@)
+	echo "Converting WAV to 16 kH from $< to $@"
+	sox $< -r 16000 $@	
 
-	for spkr in $(ALLSPKR); do \
-		mkdir -p wav16/$${spkr}; \
-		for wav in wav/$${spkr}/$(DATASET)_$${spkr}_*.wav; do \
-			base=`basename $${wav} .wav`; \
-			echo "Converting WAV to 16 kH from $${wav}" to wav16/$${spkr}/; \
-			sox $${wav} -r 16000 wav16/$${spkr}/$${base}.wav; \
-		done \
-	done
-	touch wav16/.done	
+lf0/%.lf0: wav16/%.wav
+	echo "Converting extracting lf0 to $@"
+	@base=`basename $< .wav`; \
+	spkr=`basename $$(dirname $<)`; \
+	set $${F0_RANGES}; \
+	for sp in $(ALLSPKR); do \
+		name=$${1}; lowerf0_t=$${2}; upperf0_t=$${3}; shift 3; \
+		if [ $${name} = $${spkr} ]; then \
+			lowerf0=$${lowerf0_t}; \
+			upperf0=$${upperf0_t}; \
+		fi; \
+	done; \
+	if [ -z $${lowerf0+x} ]; then echo "No lower lf0 ranges for $${spkr} "; exit 1; fi; \
+	if [ -z $${upperf0+x} ]; then echo "No upper lf0 ranges for $${spkr} "; exit 1; fi; \
+	mkdir -p mgc/$${spkr} lf0/$${spkr} bap/$${spkr}; \
+	echo "$${base} $${spkr} $${lowerf0} $${upperf0}"; \
+	$(AHOCODER) $< lf0/$${spkr}/$${base}.lf0 mgc/$${spkr}/$${base}.mgc bap/$${spkr}/$${base}.bap \
+	 			--f0min=$${lowerf0} --f0max=$${upperf0} --ccord=$(MGCORDER) --lframe=$(FRAMESHIFT);
 
+cmp/%.cmp: lf0/%.lf0
+	# Composing training data files from extracted features
+	mkdir -p cmp
+	@base=`basename $< .lf0`; \
+	spkr=`basename $$(dirname $<)`; \
+	mkdir -p cmp/$${spkr}; \
+	echo "Composing training data for $${base}"; \
+	MGCDIM=`expr $(MGCORDER) + 1`; \
+	LF0DIM=1; \
+	MGCWINDIM=`expr $(NMGCWIN) \* $${MGCDIM}`; \
+	LF0WINDIM=`expr $(NLF0WIN) \* $${LF0DIM}`; \
+	BYTEPERFRAME=`expr 4 \* \( $${MGCWINDIM} + $${LF0WINDIM} \)`; \
+	if [ -s mgc/$${spkr}/$${base}.mgc -a -s lf0/$${spkr}/$${base}.lf0 ]; then \
+		MGCWINS=""; \
+		i=1; \
+		while [ $${i} -le $(NMGCWIN) ]; do \
+			eval MGCWINS=\"$${MGCWINS} $(MGCWIN)$${i}\"; \
+			i=`expr $${i} + 1`; \
+		done; \
+		$(PERL) scripts/window.pl $${MGCDIM} mgc/$${spkr}/$${base}.mgc $${MGCWINS} > cmp/$${spkr}/$${base}.mgc; \
+		LF0WINS=""; \
+		i=1; \
+		while [ $${i} -le $(NLF0WIN) ]; do \
+			eval LF0WINS=\"$${LF0WINS} $(LF0WIN)$${i}\"; \
+			i=`expr $${i} + 1`; \
+		done; \
+		$(PERL) scripts/window.pl $${LF0DIM} lf0/$${spkr}/$${base}.lf0 $${LF0WINS} > cmp/$${spkr}/$${base}.lf0; \
+		$(MERGE) +f -s 0 -l $${LF0WINDIM} -L $${MGCWINDIM} cmp/$${spkr}/$${base}.mgc < cmp/$${spkr}/$${base}.lf0 > cmp/$${spkr}/$${base}.i_cmp; \
+		$(PERL) scripts/addhtkheader.pl $(SAMPFREQ) $(FRAMESHIFT) $${BYTEPERFRAME} 9 cmp/$${spkr}/$${base}.i_cmp > cmp/$${spkr}/$${base}.cmp; \
+		rm -f cmp/$${spkr}/$${base}.mgc cmp/$${spkr}/$${base}.lf0 cmp/$${spkr}/$${base}.i_cmp; \
+	fi;
 
 lf0/.done: raw/.done
 	# Extracting features from raw audio
@@ -255,65 +305,6 @@ lf0/.done: raw/.done
 		done; \
 	done
 	touch lf0/.done
-
-lf0/.avocoder.done: wav16/.done
-	mkdir -p mgc lf0 bap
-	SAMPKHZ=`echo $(SAMPFREQ) | $(X2X) +af | $(SOPR) -m 0.001 | $(X2X) +fa`; \
-	set $${F0_RANGES}; \
-	for spkr in $(ALLSPKR); do \
-		mkdir -p mgc/$${spkr} lf0/$${spkr} bap/$${spkr}; \
-		name=$${1}; lowerf0=$${2}; upperf0=$${3}; shift 3; \
-		if [ $${name} != $${spkr} ]; then \
-			echo "Order of speakers in ALLSPKR ($${spkr}) doesn't match to that in F0_RANGES ($${name})!"; \
-			exit 1; \
-		fi; \
-		for wav in wav16/$${spkr}/$(DATASET)_$${spkr}_*.wav; do \
-			base=`basename $${wav} .wav`; \
-			echo "Extracting features from $${wav}"; \
-			$(AHOCODER) $${wav} lf0/$${spkr}/$${base}.lf0 mgc/$${spkr}/$${base}.mgc bap/$${spkr}/$${base}.bap \
-				--f0min=$${lowerf0} --f0max=$${upperf0} --ccord=$(MGCORDER) --lframe=$(FRAMESHIFT); \
-		done; \
-	done
-	touch lf0/.avocoder.done
-
-cmp/.avocoder.done: lf0/.avocoder.done
-	# Composing training data files from extracted features
-	mkdir -p cmp
-	echo "MGCORDER: $(MGCORDER)"
-	echo "NMGCWIN: $(NMGCWIN)"
-	echo "NLF0WIN: $(NLF0WIN)"
-	for spkr in $(ALLSPKR); do \
-		mkdir -p cmp/$${spkr}; \
-		for wav in wav16/$${spkr}/$(DATASET)_$${spkr}_*.wav; do \
-			base=`basename $${wav} .wav`; \
-			echo "Composing training data for $${base}"; \
-			MGCDIM=`expr $(MGCORDER) + 1`; \
-			LF0DIM=1; \
-			MGCWINDIM=`expr $(NMGCWIN) \* $${MGCDIM}`; \
-			LF0WINDIM=`expr $(NLF0WIN) \* $${LF0DIM}`; \
-			BYTEPERFRAME=`expr 4 \* \( $${MGCWINDIM} + $${LF0WINDIM} \)`; \
-			if [ -s mgc/$${spkr}/$${base}.mgc -a -s lf0/$${spkr}/$${base}.lf0 ]; then \
-				MGCWINS=""; \
-				i=1; \
-				while [ $${i} -le $(NMGCWIN) ]; do \
-					eval MGCWINS=\"$${MGCWINS} $(MGCWIN)$${i}\"; \
-					i=`expr $${i} + 1`; \
-				done; \
-				$(PERL) scripts/window.pl $${MGCDIM} mgc/$${spkr}/$${base}.mgc $${MGCWINS} > cmp/$${spkr}/$${base}.mgc; \
-				LF0WINS=""; \
-				i=1; \
-				while [ $${i} -le $(NLF0WIN) ]; do \
-					eval LF0WINS=\"$${LF0WINS} $(LF0WIN)$${i}\"; \
-					i=`expr $${i} + 1`; \
-				done; \
-				$(PERL) scripts/window.pl $${LF0DIM} lf0/$${spkr}/$${base}.lf0 $${LF0WINS} > cmp/$${spkr}/$${base}.lf0; \
-				$(MERGE) +f -s 0 -l $${LF0WINDIM} -L $${MGCWINDIM} cmp/$${spkr}/$${base}.mgc < cmp/$${spkr}/$${base}.lf0 > cmp/$${spkr}/$${base}.i_cmp; \
-				$(PERL) scripts/addhtkheader.pl $(SAMPFREQ) $(FRAMESHIFT) $${BYTEPERFRAME} 9 cmp/$${spkr}/$${base}.i_cmp > cmp/$${spkr}/$${base}.cmp; \
-				rm -f cmp/$${spkr}/$${base}.mgc cmp/$${spkr}/$${base}.lf0 cmp/$${spkr}/$${base}.i_cmp; \
-			fi; \
-		done; \
-	done
-	touch cmp/.avocoder.done	
 
 cmp/.done: lf0/.done
 	# Composing training data files from extracted features
@@ -567,8 +558,9 @@ lab:
 			cp $${lab} labels/gen/$${spkr}/$(DATASET)_$${spkr}_$${base}.lab; \
 		done; \
 	done
+	touch labels/.done
 
-speaker_gen_data:
+labels/.gen.done:
 	# Copying labels under gen directory
 	mkdir -p labels/gen; \
 	for spkr in $(ADAPTSPKR); do \
@@ -578,8 +570,9 @@ speaker_gen_data:
 			cp $${lab} labels/gen/$${spkr}/$(DATASET)_$${spkr}_$${base}.lab; \
 		done; \
 	done
+	touch labels/.gen.done
 
-mlf:
+labels/.mlf.done:
 	# Generating monophone and fullcontext Master Label Files (MLF)
 	echo "#!MLF!#" > labels/mono.mlf
 	echo "#!MLF!#" > labels/full.mlf
@@ -587,8 +580,10 @@ mlf:
 		echo "\"*/$(DATASET)_$${spkr}_*.lab\" -> \"@PWD@/data/labels/mono/$${spkr}\"" >> labels/mono.mlf; \
 		echo "\"*/$(DATASET)_$${spkr}_*.lab\" -> \"@PWD@/data/labels/full/$${spkr}\"" >> labels/full.mlf; \
 	done
+	touch labels/.mlf.done
 
-list:
+
+lists/.done: labels/.gen.done $(_analysis)
 	# Generating a fullcontext model list file
 	mkdir -p lists
 
@@ -628,8 +623,9 @@ list:
 	done
 	sort -u tmp > lists/mono.list
 	rm -f tmp
+	touch lists/.done
 
-scp:
+scp/.done: $(_analysis)
 	# Generating a trainig data script
 	mkdir -p scp
 
@@ -659,6 +655,7 @@ scp:
 			echo $${lab} >> scp/gen.lab.scp; \
 		done; \
 	done
+	touch scp/.done
 
 clean: clean-mgc clean-lf0 clean-bap clean-cmp clean-ffo clean-stats clean-lab clean-mlf clean-list clean-scp clean-raw
 
@@ -668,6 +665,7 @@ clean-mgc:
 clean-raw:
 	rm -rf raw
 	rm -rf wav
+	rm -rf wav16
 
 clean-lf0:
 	rm -rf lf0
@@ -709,3 +707,5 @@ distclean: clean
 	rm -f Makefile
 
 .PHONY: all analysis features cmp ffo stats labels lab mlf list scp question clean distclean
+
+.SECONDARY:
