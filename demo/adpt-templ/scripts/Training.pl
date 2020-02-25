@@ -1088,7 +1088,17 @@ if ( $ENGIN && !$usestraight ) {
       chomp($base);
 
       print " Synthesizing a speech waveform from $lab using hts_engine...";
-      shell("$hts_engine -or ${dir}/${base}.raw -ow ${dir}/${base}.wav -ot ${dir}/${base}.trace $lab");
+      if ( $useAVocoder ) {
+         shell("$hts_engine -om ${dir}/${base}.mgc -of ${dir}/${base}.lf0 -ot ${dir}/${base}.trace $lab");
+         
+         print " Synthesizing a speech waveform from ${dir}/${base}.mgc/lf0...";
+         # generate using ahodecoder
+         $line = "$AHODECODER ${dir}/${base}.lf0 ${dir}/${base}.mgc ${dir}/${base}.wav --lframe=$fs";
+         shell($line);
+      }
+      else {
+         shell("$hts_engine -or ${dir}/${base}.raw -ow ${dir}/${base}.wav -ot ${dir}/${base}.trace $lab");
+      }
       print "done\n";
    }
    close(SCP);
@@ -3049,7 +3059,7 @@ sub gen_wave($$) {
       if ( $useAVocoder && -s $file && -s $lf0 ) {
          print " Synthesizing a speech waveform from $mgc and $base.lf0...";
 
-         # generarte using ahodecoder
+         # generate using ahodecoder
          $line = "$AHODECODER $lf0 $mgc $gendir/${base}.wav --lframe=$fs";
          shell($line);
 
