@@ -3046,7 +3046,16 @@ sub gen_wave($$) {
       $lf0 = "$gendir/$base.lf0";
       $bap = "$gendir/$base.bap";
 
-      if ( !$usestraight && -s $file && -s $lf0 ) {
+      if ( $useAVocoder && -s $file && -s $lf0 ) {
+         print " Synthesizing a speech waveform from $mgc and $base.lf0...";
+
+         # generarte using ahodecoder
+         $line = "$AHODECODER $lf0 $mgc $gendir/${base}.wav --lframe=$fs";
+         shell($line);
+
+         print "done\n";
+      }
+      elsif ( !$usestraight && -s $file && -s $lf0 ) {
          print " Synthesizing a speech waveform from $base.mgc and $base.lf0...";
 
          # convert log F0 to pitch
