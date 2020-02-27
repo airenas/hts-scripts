@@ -7,3 +7,5 @@ HTS-demo_CMU-ARCTIC-ADAPT*
 src/py/.idea/**
 prozodija.data.log*
 demo/hts*/**
+agpu/**
+voice/voice*/**
