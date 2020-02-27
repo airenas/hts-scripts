@@ -625,7 +625,7 @@ lists/.done: labels/.gen.done $(_analysis)
 	rm -f tmp
 	touch lists/.done
 
-scp/.done: $(_analysis)
+scp/.done: $(_analysis) labels/.gen.done
 	# Generating a trainig data script
 	mkdir -p scp
 
