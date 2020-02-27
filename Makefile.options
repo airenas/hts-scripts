@@ -7,4 +7,5 @@ hts_engine_ver=1.10
 gcc_festival=gcc
 copy_script=../prozodija/src/groovy/src/scripts/copy/CopyDataToHts.groovy
 prepared_data_dir=../prozodija/prepareData/tmp
+USEGV=0
 

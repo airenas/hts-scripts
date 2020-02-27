@@ -129,7 +129,7 @@ prepare_ahocoder: $(bin_dir)/$(ahocoder)/.done
 #########################################################################################
 prepare_all: prepare_hts_engine prepare_hts prepare_festival prepare_sptk prepare_ahocoder
 install:
-	sudo apt-get install libx11-dev csh libncurses5-dev sox
+	sudo apt-get install libx11-dev csh libncurses5-dev sox bc
 #########################################################################################
 HTS-demo_CMU-ARCTIC-ADAPT: 
 	tar xvjf HTS-demo_CMU-ARCTIC-ADAPT.tar.bz2 -C ./
@@ -160,6 +160,7 @@ configure_lt: | $(hts_demo_dir)
 				F0_RANGES='$(SPEAKERS_F0_RANGES)' \
 				SAMPFREQ=$(SAMPFREQ) DATASET=lab \
 				FRAMELEN=$(FRAMELEN) FRAMESHIFT=$(FRAMESHIFT) NSTATE=5 \
+				USEGV=$(USEGV) \
 				USE_A_VOCODER=$(USE_A_VOCODER))
 
 clean_demo: 
@@ -169,7 +170,7 @@ copy_hts_data:
 	groovy $(copy_script) $(prepared_data_dir) $(hts_demo_dir)/data -wav -mono_labels -full_labels -gen_labels -questions 
 	cp $(prepared_data_dir)/config.options $(hts_demo_dir)/
 
-clean:
+clean_tools:
 	rm -rf $(dwn_dir)
 	rm -rf $(bin_dir)
 	rm -rf $(tools_dir)
