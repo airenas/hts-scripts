@@ -1,7 +1,13 @@
 -include Makefile.options
-
+#########################################################################################
+ifndef cfg
+$(error cfg is not set)
+endif
+ifeq ("$(wildcard $(cfg))","")
+$(error $(cfg) does exist)
+endif
 -include $(cfg)
-
+#########################################################################################
 -include $(prepared_data_dir)/config.options
 
 

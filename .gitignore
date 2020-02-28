@@ -9,3 +9,4 @@ prozodija.data.log*
 demo/hts*/**
 agpu/**
 voice/voice*/**
+*.cfg
