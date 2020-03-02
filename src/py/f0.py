@@ -6,7 +6,6 @@ from argparse import ArgumentParser
 
 parser = ArgumentParser()
 parser.add_argument("-f", "--file", dest="filename", help="f0 file", metavar="FILE")
-parser.add_argument("-l", dest="useLog", type=bool, default=False)
 parser.add_argument("-s", dest="start", type=int, default=0)
 parser.add_argument("-e", dest="end", type=int, default=-1)
 args = parser.parse_args()
@@ -23,10 +22,8 @@ print("args.start", args.start)
 print("args.end", args.end)
 d = data[args.start: args.end]
 d[d < -100] = 0
-if args.useLog:
-    d = np.power(np.e, d)
 
-dv = d[d > 10]
+dv = d[d > 2]
 print("Min: ", np.min(dv))
 print("Max:", np.max(dv))
 
@@ -35,5 +32,7 @@ n, bins, patches = plt.hist(dv, 50, facecolor='blue', alpha=0.5)
 
 plt.figure(2)
 plt.title("F0")
-plt.plot(d)
+pd = d
+pd[pd < 2] = np.nan
+plt.plot(pd)
 plt.show()
