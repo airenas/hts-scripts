@@ -10,3 +10,4 @@ demo/hts*/**
 agpu/**
 voice/voice*/**
 *.cfg
+voice/samples/**

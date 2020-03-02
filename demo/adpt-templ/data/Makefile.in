@@ -152,7 +152,7 @@ raw/.done: wav
 wav16/%.wav: wav/%.wav
 	mkdir -p $(dir $@)
 	echo "Converting WAV to 16 kH from $< to $@"
-	sox $< -r 16000 $@	
+	sox $< -r 16000 -b 16 $@	
 
 lf0/%.lf0: wav16/%.wav
 	echo "Converting extracting lf0 to $@"
