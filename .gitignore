@@ -11,3 +11,4 @@ agpu/**
 voice/voice*/**
 *.cfg
 voice/samples/**
+**/*.pyc

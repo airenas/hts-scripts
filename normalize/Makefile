@@ -1,6 +1,6 @@
 #########################################################################################
-in_dir=../demo/hts-w02/data/lf0
-out_dir=../demo/hts-w02/data/lf0n
+in_dir=../demo/hts-w10/data/lf0
+out_dir=../demo/hts-w10/data/lf0n
 py_dir=../src/py
 hz_avg=175
 
