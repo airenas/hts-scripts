@@ -120,6 +120,8 @@ export F0_RANGES=@F0_RANGES@
 #collect files
 wav_files=$(shell find wav/ -type f -name *.wav)
 cmp_files=$(patsubst wav/%.wav, cmp/%.cmp, $(wav_files))
+raw_files=$(patsubst wav/%.wav, raw/%.raw, $(wav_files))
+mgc_files=$(patsubst wav/%.wav, mgc/%.mgc, $(wav_files))
 wav16_files=$(patsubst wav/%.wav, wav16/%.wav, $(wav_files))
 lf0_files=$(patsubst wav/%.wav, lf0/%.lf0, $(wav_files))
 
@@ -149,14 +151,19 @@ raw/.done: wav
 	done
 	touch raw/.done
 
+raw/%.raw: wav16/%.wav
+	@mkdir -p $(dir $@)
+	@echo "Converting WAV $< to RAW $@"
+	$(WAV2RAW) -d $(dir $@) $<
+
 wav16/%.wav: wav/%.wav
-	mkdir -p $(dir $@)
-	echo "Converting WAV to 16 kH from $< to $@"
+	@mkdir -p $(dir $@)
+	@echo "Converting WAV to 16 kH from $< to $@"
 	sox $< -r 16000 -b 16 $@	
 
-lf0/%.lf0: wav16/%.wav
-	echo "Converting extracting lf0 to $@"
-	@base=`basename $< .wav`; \
+lf0/%.lf0: raw/%.raw
+	@echo "Converting extracting lf0 to $@"
+	@base=`basename $< .raw`; \
 	spkr=`basename $$(dirname $<)`; \
 	set $${F0_RANGES}; \
 	for sp in $(ALLSPKR); do \
@@ -168,14 +175,20 @@ lf0/%.lf0: wav16/%.wav
 	done; \
 	if [ -z $${lowerf0+x} ]; then echo "No lower lf0 ranges for $${spkr} "; exit 1; fi; \
 	if [ -z $${upperf0+x} ]; then echo "No upper lf0 ranges for $${spkr} "; exit 1; fi; \
-	mkdir -p mgc/$${spkr} lf0/$${spkr} bap/$${spkr}; \
+	mkdir -p lf0/$${spkr}; \
 	echo "$${base} $${spkr} $${lowerf0} $${upperf0}"; \
-	$(AHOCODER) $< lf0/$${spkr}/$${base}.lf0 mgc/$${spkr}/$${base}.mgc bap/$${spkr}/$${base}.bap \
-	 			--f0min=$${lowerf0} --f0max=$${upperf0} --ccord=$(MGCORDER) --lframe=$(FRAMESHIFT);
+	SAMPKHZ=`echo $(SAMPFREQ) | $(X2X) +af | $(SOPR) -m 0.001 | $(X2X) +fa`; \
+	$(X2X) +sf $< | $(PITCH) -H $${upperf0} -L $${lowerf0} -p $(FRAMESHIFT) -s $${SAMPKHZ} -o 2 > lf0/$${spkr}/$${base}.lf0;
 
-cmp/%.cmp: lf0/%.lf0
+mgc/%.mgc: wav16/%.wav
+	@echo "Converting extracting mgc to $@"
+	@base=`basename $< .wav`; \
+	spkr=`basename $$(dirname $<)`; \
+	mkdir -p mgc/$${spkr}; \
+	$(AHOCODER) $< /dev/null mgc/$${spkr}/$${base}.mgc /dev/null --ccord=$(MGCORDER) --lframe=$(FRAMESHIFT);
+
+cmp/%.cmp: lf0/%.lf0 mgc/%.mgc
 	# Composing training data files from extracted features
-	mkdir -p cmp
 	@base=`basename $< .lf0`; \
 	spkr=`basename $$(dirname $<)`; \
 	mkdir -p cmp/$${spkr}; \
