@@ -654,7 +654,7 @@ scp/.done: $(_analysis) labels/.gen.done
 	# Generating an adaptation data script
 	rm -f scp/adapt.cmp.scp
 	for spkr in $(ADAPTSPKR); do \
-		for cmp in @PWD@/data/cmp/$${spkr}/$(DATASET)_$(ADAPTHEAD)*.cmp; do \
+		for cmp in @PWD@/data/cmp/$${spkr}/$(DATASET)_*.cmp; do \
 			if [ -s $${cmp} -a -s labels/mono/$${spkr}/`basename $${cmp} .cmp`.lab -a -s labels/full/$${spkr}/`basename $${cmp} .cmp`.lab ]; then \
 				echo $${cmp} >> scp/adapt.cmp.scp; \
 			fi; \
