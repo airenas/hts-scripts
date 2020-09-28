@@ -590,8 +590,8 @@ labels/.mlf.done:
 	echo "#!MLF!#" > labels/mono.mlf
 	echo "#!MLF!#" > labels/full.mlf
 	for spkr in $(ALLSPKR); do \
-		echo "\"*/$(DATASET)_$${spkr}_*.lab\" -> \"@PWD@/data/labels/mono/$${spkr}\"" >> labels/mono.mlf; \
-		echo "\"*/$(DATASET)_$${spkr}_*.lab\" -> \"@PWD@/data/labels/full/$${spkr}\"" >> labels/full.mlf; \
+		echo "\"*$${spkr}/$(DATASET)_*.lab\" -> \"@PWD@/data/labels/mono/$${spkr}\"" >> labels/mono.mlf; \
+		echo "\"*$${spkr}/$(DATASET)_*.lab\" -> \"@PWD@/data/labels/full/$${spkr}\"" >> labels/full.mlf; \
 	done
 	touch labels/.mlf.done
 
@@ -602,7 +602,7 @@ lists/.done: labels/.gen.done $(_analysis)
 
 	rm -f tmp
 	for spkr in $(TRAINSPKR); do \
-		for lab in labels/full/$${spkr}/$(DATASET)_$${spkr}_*.lab; do \
+		for lab in labels/full/$${spkr}/$(DATASET)_*.lab; do \
 			if [ -s $${lab} -a -s labels/mono/$${spkr}/`basename $${lab}` -a -s cmp/$${spkr}/`basename $${lab} .lab`.cmp ]; then \
 				sed -e "s/.* //g" $${lab} >> tmp; \
 			fi; \
@@ -615,10 +615,10 @@ lists/.done: labels/.gen.done $(_analysis)
 	rm -f tmp
 	cat lists/full.list > tmp
 	for spkr in $(ADAPTSPKR); do \
-		for lab in labels/full/$${spkr}/$(DATASET)_$${spkr}_*.lab; do \
+		for lab in labels/full/$${spkr}/$(DATASET)_*.lab; do \
 			sed -e "s/.* //g" $${lab} >> tmp; \
 		done; \
-		for lab in labels/gen/$${spkr}/$(DATASET)_$${spkr}_*.lab; do \
+		for lab in labels/gen/$${spkr}/$(DATASET)_*.lab; do \
 			sed -e "s/.* //g" $${lab} >> tmp; \
 		done; \
 	done
@@ -628,7 +628,7 @@ lists/.done: labels/.gen.done $(_analysis)
 	# Generating a monophone list file
 	rm -f tmp
 	for spkr in $(TRAINSPKR); do \
-		for lab in labels/mono/$${spkr}/$(DATASET)_$${spkr}_*.lab; do \
+		for lab in labels/mono/$${spkr}/$(DATASET)_*.lab; do \
 			if [ -s $${lab} -a -s labels/full/$${spkr}/`basename $${lab}` -a -s cmp/$${spkr}/`basename $${lab} .lab`.cmp ]; then \
 				sed -e "s/.* //g" $${lab} >> tmp; \
 			fi; \
@@ -644,7 +644,7 @@ scp/.done: $(_analysis) labels/.gen.done
 
 	rm -f scp/train.cmp.scp
 	for spkr in $(TRAINSPKR); do \
-		for cmp in @PWD@/data/cmp/$${spkr}/$(DATASET)_$${spkr}_*.cmp; do \
+		for cmp in @PWD@/data/cmp/$${spkr}/$(DATASET)_*.cmp; do \
 			if [ -s $${cmp} -a -s labels/mono/$${spkr}/`basename $${cmp} .cmp`.lab -a -s labels/full/$${spkr}/`basename $${cmp} .cmp`.lab ]; then \
 				echo $${cmp} >> scp/train.cmp.scp; \
 			fi; \
@@ -654,7 +654,7 @@ scp/.done: $(_analysis) labels/.gen.done
 	# Generating an adaptation data script
 	rm -f scp/adapt.cmp.scp
 	for spkr in $(ADAPTSPKR); do \
-		for cmp in @PWD@/data/cmp/$${spkr}/$(DATASET)_$${spkr}_$(ADAPTHEAD)*.cmp; do \
+		for cmp in @PWD@/data/cmp/$${spkr}/$(DATASET)_$(ADAPTHEAD)*.cmp; do \
 			if [ -s $${cmp} -a -s labels/mono/$${spkr}/`basename $${cmp} .cmp`.lab -a -s labels/full/$${spkr}/`basename $${cmp} .cmp`.lab ]; then \
 				echo $${cmp} >> scp/adapt.cmp.scp; \
 			fi; \
@@ -664,7 +664,7 @@ scp/.done: $(_analysis) labels/.gen.done
 	# Generating a generation label script
 	rm -f scp/gen.lab.scp
 	for spkr in $(ADAPTSPKR); do \
-		for lab in @PWD@/data/labels/gen/$${spkr}/$(DATASET)_$${spkr}_*.lab; do \
+		for lab in @PWD@/data/labels/gen/$${spkr}/$(DATASET)_*.lab; do \
 			echo $${lab} >> scp/gen.lab.scp; \
 		done; \
 	done

@@ -147,11 +147,12 @@ configure_cmu_arctic: | HTS-demo_CMU-ARCTIC-ADAPT
                  --with-hts-search-path=$(bin_dir)/$(hts)/bin \
                  --with-hts-engine-search-path=$(bin_dir)/$(hts_engine)/bin )
 
-$(hts_demo_dir): 
-	mkdir -p $(hts_demo_dir)
+$(hts_demo_dir):
+	mkdir -p $@
+$(hts_demo_dir)/Makefile.in: | $(hts_demo_dir)
 	cp -r demo/adpt-templ/* $(hts_demo_dir)/
 
-configure_lt: | $(hts_demo_dir)
+configure_lt: | $(hts_demo_dir)/Makefile.in
 	(cd $(hts_demo_dir) && \
    		./configure --with-fest-search-path=$(tools_dir)/festival/examples \
                 --with-sptk-search-path=$(bin_dir)/$(sptk)/bin \
@@ -175,6 +176,11 @@ clean_demo:
 copy_hts_data: 
 	groovy $(copy_script) $(prepared_data_dir) $(hts_demo_dir)/data -wav -mono_labels -full_labels -gen_labels -questions 
 	cp $(prepared_data_dir)/config.options $(hts_demo_dir)/
+
+info:
+	@echo prepared_data_dir: $(prepared_data_dir)
+	@echo copy_script: 		$(copy_script)
+	@echo hts_demo_dir: $(hts_demo_dir)
 
 clean_tools:
 	rm -rf $(dwn_dir)

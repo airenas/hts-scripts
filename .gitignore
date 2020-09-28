@@ -12,3 +12,4 @@ voice/voice*/**
 *.cfg
 voice/samples/**
 **/*.pyc
+demo/sabina/**
