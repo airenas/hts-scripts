@@ -13,6 +13,6 @@ if args.filename is not None:
 else:
     data = np.loadtxt(sys.stdin, dtype=np.float32)
 
-#print("Len: ", (data.shape[0]/(16000/80))/60, "m")
+print("Len: ", (data.shape[0]/(16000/80)), "s")
 dgz = data[data > 0]
 print("Min: ", np.min(dgz), "Max: ", np.max(dgz), "Avg: ", np.mean(dgz))
