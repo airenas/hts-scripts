@@ -76,12 +76,12 @@ cp_orig: $(voice_dir)
 build_voice:
 	perl prepareHTSVoice.pl $(voice_dir) $(original_train_dir)
 ############################################
-all: clean_dir cp_orig prepare_lf0 prepare_mgc prepare_dur build_voice	 
+all: clean cp_orig prepare_lf0 prepare_mgc prepare_dur build_voice	 
 ############################################
 copy_to_orig:
 	cp $(voice_dir)/*.htsvoice $(original_train_dir)/voices/ver1/
 ############################################
-clean_dir: 
+clean: 
 	rm -rf $(voice_dir)
 ############################################
 PHONY: prepare_lf0_hed

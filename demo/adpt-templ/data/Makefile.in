@@ -137,18 +137,7 @@ analysis: $(_analysis)
 
 labels: labels/.mlf.done labels/.gen.done lists/.done scp/.done
 
-raw/.done: wav
-	# Converting wav to raw
-	mkdir -p raw
-
-	for spkr in $(ALLSPKR); do \
-		mkdir -p raw/$${spkr}; \
-		for wav in wav/$${spkr}/$(DATASET)_$${spkr}_*.wav; do \
-			base=`basename $${wav} .wav`; \
-			echo "Converting WAV to raw from $${wav}" to raw/$${spkr}/$${base}.raw; \
-			$(WAV2RAW) -d raw/$${spkr} $${wav}; \
-		done \
-	done
+raw/.done: $(raw_files)
 	touch raw/.done
 
 raw/%.raw: wav16/%.wav
@@ -178,14 +167,16 @@ lf0/%.lf0: raw/%.raw
 	mkdir -p lf0/$${spkr}; \
 	echo "$${base} $${spkr} $${lowerf0} $${upperf0}"; \
 	SAMPKHZ=`echo $(SAMPFREQ) | $(X2X) +af | $(SOPR) -m 0.001 | $(X2X) +fa`; \
-	$(X2X) +sf $< | $(PITCH) -H $${upperf0} -L $${lowerf0} -p $(FRAMESHIFT) -s $${SAMPKHZ} -o 2 > lf0/$${spkr}/$${base}.lf0;
+	$(X2X) +sf $< | $(PITCH) -H $${upperf0} -L $${lowerf0} -p $(FRAMESHIFT) -s $${SAMPKHZ} -o 2 -a 1 > lf0/$${spkr}/$${base}.lf0_; \
+	mv lf0/$${spkr}/$${base}.lf0_ lf0/$${spkr}/$${base}.lf0;
 
 mgc/%.mgc: wav16/%.wav
 	@echo "Converting extracting mgc to $@"
 	@base=`basename $< .wav`; \
 	spkr=`basename $$(dirname $<)`; \
 	mkdir -p mgc/$${spkr}; \
-	$(AHOCODER) $< /dev/null mgc/$${spkr}/$${base}.mgc /dev/null --ccord=$(MGCORDER) --lframe=$(FRAMESHIFT);
+	$(AHOCODER) $< /dev/null mgc/$${spkr}/$${base}.mgc_ /dev/null --ccord=$(MGCORDER) --lframe=$(FRAMESHIFT); \
+	mv mgc/$${spkr}/$${base}.mgc_ mgc/$${spkr}/$${base}.mgc;
 
 cmp/%.cmp: lf0/%.lf0 mgc/%.mgc
 	# Composing training data files from extracted features
